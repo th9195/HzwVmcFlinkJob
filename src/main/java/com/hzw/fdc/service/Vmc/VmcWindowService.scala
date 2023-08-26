@@ -28,13 +28,6 @@ class VmcWindowService extends TService {
   private val logger: Logger = LoggerFactory.getLogger(classOf[VmcWindowService])
 
 
-  lazy val AlarmSwitchEventOutput = new OutputTag[List[AlarmSwitchEventConfig]]("AlarmSwitchEvent")
-
-  lazy val ewmaCacheOutput = new OutputTag[JsonNode]("AlarmEwmaCache")
-
-  // ewmaRetargetResult 数据侧道输出
-  lazy val retargetResultOutput = new OutputTag[JsonNode]("EwmaRetargetResult")
-
   /**
    * 获取
    *

@@ -2,7 +2,7 @@ package com.hzw.fdc.service.Vmc
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.hzw.fdc.common.{TDao, TService}
-import com.hzw.fdc.dao.Vmc.VmcIndicatorDao
+import com.hzw.fdc.dao.Vmc.{VmcETLDao}
 import com.hzw.fdc.function.online.MainFabAlarm._
 import com.hzw.fdc.util.{MainFabConstants, ProjectConfig}
 import org.apache.flink.api.common.state.MapStateDescriptor
@@ -18,9 +18,11 @@ import org.slf4j.{Logger, LoggerFactory}
  * @date 2023/8/26 11:04
  * @description VmcWindowService
  */
-class VmcIndicatorService extends TService {
-  private val dao = new VmcIndicatorDao
-  private val logger: Logger = LoggerFactory.getLogger(classOf[VmcIndicatorService])
+class VmcETLService extends TService {
+  private val dao = new VmcETLDao
+  private val logger: Logger = LoggerFactory.getLogger(classOf[VmcETLService])
+
+
 
 
   /**

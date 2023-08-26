@@ -10,6 +10,7 @@ object VmcConstants {
   // DEBUG 开关
   var IS_DEBUG = false
 
+  val VmcETLJob="VmcETLApplication"
   val VmcWindowJob="VmcWindowApplication"
   val VmcIndicatorJob="VmcIndicatorApplication"
 

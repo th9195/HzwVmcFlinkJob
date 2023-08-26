@@ -182,6 +182,16 @@ object FlinkStreamEnv {
         WriteRedisDataCheckpoint(ProjectConfig.CHECKPOINT_ENABLE_WRITE_REDIS_DATA_JOB, env, ProjectConfig.CHECKPOINT_STATE_BACKEND_WRITE_REDIS_DATA_JOB)
       }
 
+      case VmcConstants.VmcETLJob =>{
+        env.setParallelism(ProjectConfig.SET_PARALLELISM_VMC_ETL_JOB)
+
+        setCheckpoint(env,
+          isEnable = ProjectConfig.CHECKPOINT_ENABLE_VMC_ETL_JOB,
+          stateBackend = ProjectConfig.CHECKPOINT_STATE_BACKEND_VMC_ETL_JOB,
+          checkpointInterval = ProjectConfig.CHECKPOINT_INTERVAL_VMC_ETL_JOB,
+          checkpointTimeout = ProjectConfig.CHECKPOINT_TIME_OUT_VMC_ETL_JOB)
+      }
+
       case VmcConstants.VmcWindowJob =>{
         env.setParallelism(ProjectConfig.SET_PARALLELISM_VMC_WINDOW_JOB)
 
