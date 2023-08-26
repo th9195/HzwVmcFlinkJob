@@ -1,0 +1,31 @@
+package com.hzw.fdc.scalabean
+
+
+case class IndicatorFileResult(dataType: String,
+                               controlPlanVersion: Long,
+                               controlPlanId: String,
+                               controlPlanName:String,
+                               runId:String,
+                               toolName:String,
+                               toolId: String,
+                               chamberName:String,
+                               chamberId: String,
+                               indicatorValue:String,
+                               indicatorId:String,
+                               indicatorName: String,
+                               createTime:String,
+                               limit:String,
+                               locationName: String,
+                               moduleName: String,
+                               recipeName: String,
+                               recipeId: String,
+                               toolGroupName: String,
+                               chamberGroupName: String,
+                               recipeGroupName: String,
+                               alarmLevel: String,
+                               dataMissingRatio: String,
+                               runStartTime: Long,
+                               runEndTime: Long,
+                               materialName: String,
+                               lotMESInfo: List[Option[Lot]]
+                                )

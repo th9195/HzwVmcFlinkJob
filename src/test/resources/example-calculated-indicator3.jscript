@@ -1,0 +1,6 @@
+Double i1 = $("All $Time$BCT_Temp_Control_flow%Average");
+
+if(i1>0)
+return 1;
+else
+return -1;
