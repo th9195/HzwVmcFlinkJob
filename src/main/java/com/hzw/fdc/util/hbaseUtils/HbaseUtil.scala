@@ -3,7 +3,6 @@ package com.hzw.fdc.util.hbaseUtils
 
 import com.hzw.fdc.scalabean.{AutoLimitIndicatorResult, OfflineAutoLimitRunData}
 import com.hzw.fdc.util.MainFabConstants.IS_DEBUG
-import com.hzw.fdc.service.offline.MainFabOfflineAutoLimitService
 import com.hzw.fdc.util.{LocalPropertiesConfig, ProjectConfig}
 import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hbase.{CellUtil, HBaseConfiguration, TableName}
@@ -29,7 +28,7 @@ object HbaseUtil {
   var admin: Admin = null
   var conn: Connection = null
 
-  private val logger: Logger = LoggerFactory.getLogger(classOf[MainFabOfflineAutoLimitService])
+  private val logger: Logger = LoggerFactory.getLogger(classOf[HbaseUtilJava])
 
 
 

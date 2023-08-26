@@ -1,6 +1,6 @@
 package com.hzw.fdc.function.online.MainFabVirtualSensor
 
-import com.hzw.fdc.function.offline.MainFabOfflineVirtualSensor.FdcOfflineVIrtualResultProcessFunction
+
 import com.hzw.fdc.scalabean.{SensorAliasPO, VirtualLevel, VirtualSensorAlgoParam, VirtualSensorConfig, VirtualSensorConfigData, VirtualSensorParamPO, VirtualSensorToolMsg, VirtualSensorViewPO}
 import com.hzw.fdc.util.ProjectConfig
 import org.slf4j.{Logger, LoggerFactory}
