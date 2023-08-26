@@ -182,6 +182,26 @@ object FlinkStreamEnv {
         WriteRedisDataCheckpoint(ProjectConfig.CHECKPOINT_ENABLE_WRITE_REDIS_DATA_JOB, env, ProjectConfig.CHECKPOINT_STATE_BACKEND_WRITE_REDIS_DATA_JOB)
       }
 
+      case VmcConstants.VmcWindowJob =>{
+        env.setParallelism(ProjectConfig.SET_PARALLELISM_VMC_WINDOW_JOB)
+
+        setCheckpoint(env,
+          isEnable = ProjectConfig.CHECKPOINT_ENABLE_VMC_WINDOW_JOB,
+          stateBackend = ProjectConfig.CHECKPOINT_STATE_BACKEND_VMC_WINDOW_JOB,
+          checkpointInterval = ProjectConfig.CHECKPOINT_INTERVAL_VMC_WINDOW_JOB,
+          checkpointTimeout = ProjectConfig.CHECKPOINT_TIME_OUT_VMC_WINDOW_JOB)
+      }
+
+      case VmcConstants.VmcIndicatorJob =>{
+        env.setParallelism(ProjectConfig.SET_PARALLELISM_VMC_INDICATOR_JOB)
+
+        setCheckpoint(env,
+          isEnable = ProjectConfig.CHECKPOINT_ENABLE_VMC_INDICATOR_JOB,
+          stateBackend = ProjectConfig.CHECKPOINT_STATE_BACKEND_VMC_INDICATOR_JOB,
+          checkpointInterval = ProjectConfig.CHECKPOINT_INTERVAL_VMC_INDICATOR_JOB,
+          checkpointTimeout = ProjectConfig.CHECKPOINT_TIME_OUT_VMC_INDICATOR_JOB)
+      }
+
 
 
       case _ => FlinkStreamEnv.get().setParallelism(1)
@@ -432,6 +452,52 @@ object FlinkStreamEnv {
     // 设置尝试重启的次数, 10分钟内,最大失败次数为2,重启时间间隔5秒
     env.setRestartStrategy(RestartStrategies.failureRateRestart(2,
       Time.minutes(60), Time.seconds(5)))
+  }
+
+
+  /**
+   *
+   * @param env
+   * @param isEnable                      默认: flase
+   * @param stateBackend                  默认: rocksdb
+   * @param checkpointInterval            默认: 60000
+   * @param checkpointTimeout             默认: 600000
+   * @param minPauseBetweenCheckpoints    默认: 5000
+   * @param maxConcurrentCheckpoints      默认: 1
+   * @param checkpointingMode             默认: CheckpointingMode.AT_LEAST_ONCE
+   * @param failureRate                   默认: 2
+   * @param failureInterval               默认: 30
+   * @param delayInterval                 默认: 5
+   */
+  def setCheckpoint(env: StreamExecutionEnvironment,
+                    isEnable: Boolean = false,
+                    stateBackend: String="rocksdb",
+                    checkpointInterval:Long=60000,
+                    checkpointTimeout:Long=600000,
+                    minPauseBetweenCheckpoints:Long = 5000,
+                    maxConcurrentCheckpoints:Int = 1,
+                    checkpointingMode: CheckpointingMode = CheckpointingMode.AT_LEAST_ONCE,
+                    failureRate:Int = 2,
+                    failureInterval:Long = 30,
+                    delayInterval:Long = 5): Unit = {
+
+    if (isEnable) {
+      getStateBackendFunction(isEnable, env, stateBackend)
+      env.enableCheckpointing(checkpointInterval)
+      env.getCheckpointConfig.setCheckpointTimeout(checkpointTimeout)
+
+      // 设定两个Checkpoint之间的最小时间间隔，防止出现例如状态数据过大而导致Checkpoint执行时间过长，从而导致Checkpoint积压过多
+      env.getCheckpointConfig.setMinPauseBetweenCheckpoints(minPauseBetweenCheckpoints)
+
+      // 默认情况下，只有一个检查点可以运行
+      // 根据用户指定的数量可以同时触发多个Checkpoint，进而提升Checkpoint整体的效率
+      env.getCheckpointConfig.setMaxConcurrentCheckpoints(maxConcurrentCheckpoints)
+      env.getCheckpointConfig.setCheckpointingMode(checkpointingMode)
+    }
+
+    // 设置尝试重启的次数, 30分钟内,最大失败次数为2,重启时间间隔5秒
+    env.setRestartStrategy(RestartStrategies.failureRateRestart(failureRate,
+      Time.minutes(failureInterval), Time.seconds(delayInterval)))
   }
 
 }

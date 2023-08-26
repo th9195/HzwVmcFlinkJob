@@ -71,7 +71,8 @@ object VmcCalcIndicatorUtils {
       val sensorValueList = for (sensorData <- data) yield {
         sensorData.sensorValue
       }
-      sensorValueList.sum/sensorValueList.size.toString
+      val avg = sensorValueList.sum/sensorValueList.size
+      avg.toString
     } catch {
       case ex: Exception => logger.error(s"AVGAlgorithm error: ${ex.printStackTrace()}\n " +
         s"runId == ${runId} ; \n" +

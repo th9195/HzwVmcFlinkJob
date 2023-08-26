@@ -25,9 +25,7 @@ import scala.collection.{concurrent, mutable}
  *
  */
 @SerialVersionUID(1L)
-class FdcIndicatorConfigBroadcastProcessFunction
-  extends KeyedBroadcastProcessFunction[String, fdcWindowData, JsonNode,
-    (ListBuffer[(ALGO, IndicatorConfig)], ListBuffer[RawData])] {
+class FdcIndicatorConfigBroadcastProcessFunction extends KeyedBroadcastProcessFunction[String, fdcWindowData, JsonNode, (ListBuffer[(ALGO, IndicatorConfig)], ListBuffer[RawData])] {
 
   lazy private val logger: Logger = LoggerFactory.getLogger(classOf[FdcIndicatorConfigBroadcastProcessFunction])
 

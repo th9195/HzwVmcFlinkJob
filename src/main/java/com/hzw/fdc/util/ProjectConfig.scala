@@ -531,6 +531,25 @@ object ProjectConfig {
 
 
 
+
+
+  //******************************************************* VMC START ***************************************************
+  var SET_PARALLELISM_VMC_WINDOW_JOB = 1
+  var CHECKPOINT_ENABLE_VMC_WINDOW_JOB = true
+  var CHECKPOINT_STATE_BACKEND_VMC_WINDOW_JOB = "rocksdb"
+  var CHECKPOINT_INTERVAL_VMC_WINDOW_JOB = 120000
+  var CHECKPOINT_TIME_OUT_VMC_WINDOW_JOB = 600000
+
+  var SET_PARALLELISM_VMC_INDICATOR_JOB = 1
+  var CHECKPOINT_ENABLE_VMC_INDICATOR_JOB = true
+  var CHECKPOINT_STATE_BACKEND_VMC_INDICATOR_JOB = "rocksdb"
+  var CHECKPOINT_INTERVAL_VMC_INDICATOR_JOB = 60000
+  var CHECKPOINT_TIME_OUT_VMC_INDICATOR_JOB = 600000
+
+
+  //******************************************************* VMC END ***************************************************
+
+
   /**
    * 初始化
    */
@@ -1148,6 +1167,29 @@ object ProjectConfig {
     SET_MAX_RESULT_SIZE = configname.get("set.max.result.size", SET_MAX_RESULT_SIZE.toString).trim.toLong
     SET_SCAN_CACHE_SIZE = configname.get("set.scan.cache.size", SET_SCAN_CACHE_SIZE.toString).trim.toInt
 
+
+    //******************************************************* VMC START ***************************************************
+
+    SET_PARALLELISM_VMC_WINDOW_JOB = configname.get("set.parallelism.vmc.window.job",SET_PARALLELISM_VMC_WINDOW_JOB.toString).trim.toInt
+    CHECKPOINT_ENABLE_VMC_WINDOW_JOB = configname.get("checkpoint.enable.vmc.window.job",CHECKPOINT_ENABLE_VMC_WINDOW_JOB.toString).trim.toBoolean
+    CHECKPOINT_STATE_BACKEND_VMC_WINDOW_JOB = configname.get("checkpoint.state.backend.vmc.window.job",CHECKPOINT_STATE_BACKEND_VMC_WINDOW_JOB).trim
+    CHECKPOINT_INTERVAL_VMC_WINDOW_JOB = configname.get("checkpoint.interval.vmc.window.job",CHECKPOINT_INTERVAL_VMC_WINDOW_JOB.toString).trim.toInt
+    CHECKPOINT_TIME_OUT_VMC_WINDOW_JOB = configname.get("checkpoint.time.out.vmc.window.job",CHECKPOINT_TIME_OUT_VMC_WINDOW_JOB.toString).trim.toInt
+
+
+    SET_PARALLELISM_VMC_INDICATOR_JOB = configname.get("set.parallelism.vmc.indicator.job",SET_PARALLELISM_VMC_INDICATOR_JOB.toString).trim.toInt
+    CHECKPOINT_ENABLE_VMC_INDICATOR_JOB = configname.get("checkpoint.enable.vmc.indicator.job",CHECKPOINT_ENABLE_VMC_INDICATOR_JOB.toString).trim.toBoolean
+    CHECKPOINT_STATE_BACKEND_VMC_INDICATOR_JOB = configname.get("checkpoint.state.backend.vmc.indicator.job",CHECKPOINT_STATE_BACKEND_VMC_INDICATOR_JOB).trim
+    CHECKPOINT_INTERVAL_VMC_INDICATOR_JOB = configname.get("checkpoint.interval.vmc.indicator.job",CHECKPOINT_INTERVAL_VMC_INDICATOR_JOB.toString).trim.toInt
+    CHECKPOINT_TIME_OUT_VMC_INDICATOR_JOB = configname.get("checkpoint.time.out.vmc.indicator.job",CHECKPOINT_TIME_OUT_VMC_INDICATOR_JOB.toString).trim.toInt
+
+
+
+    //******************************************************* VMC END ***************************************************
+
+
+
+
     configname
   }
 
@@ -1257,10 +1299,7 @@ object ProjectConfig {
      */
 
     properties.setProperty("auto.offset.reset", autoOffsetReset)
-    //自动检查kafka新增分区
-//    if(KAFKA_PROPERTIES_KEY_PARTITION_DISCOVERY_ENABLE){
-//      properties.setProperty(FlinkKafkaConsumerBase.KEY_PARTITION_DISCOVERY_INTERVAL_MILLIS, KAFKA_PROPERTIES_KEY_PARTITION_DISCOVERY_INTERVAL_MILLIS)
-//    }
+
     properties
   }
 

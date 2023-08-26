@@ -3,9 +3,10 @@ package com.hzw.fdc.common
 import com.hzw.fdc.util.FlinkStreamEnv
 
 /**
- * @author gdj
- * @create 2020-05-25-17:15
  *
+ * @author tanghui
+ * @date 2023/8/26 11:04
+ * @description TApplication
  */
 trait TApplication {
   def start(op: => Unit, jobName: String): Unit = {
