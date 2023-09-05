@@ -8,8 +8,8 @@ package com.hzw.fdc.scalabean.VmcBeans
  */
 case class VmcConfig[T]()(`dataType`:String,
                           serialNo:String,
-                          status:Boolean,
                           timestamp:Long,
+                          status:String,
                           data:T)
 
 case class VmcControlPlanConfig(controlPlanId:String,
