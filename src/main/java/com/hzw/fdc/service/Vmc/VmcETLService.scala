@@ -3,7 +3,7 @@ package com.hzw.fdc.service.Vmc
 import com.fasterxml.jackson.databind.JsonNode
 import com.hzw.fdc.common.{TDao, TService}
 import com.hzw.fdc.dao.Vmc.VmcETLDao
-import com.hzw.fdc.function.online.vmc.etl.VmcFilterToolBroadCastProcessFunction
+import com.hzw.fdc.function.online.vmc.etl.{VmcFilterToolBroadCastProcessFunction, VmcMatchControlPlanBroadCastProcessFunction}
 import com.hzw.fdc.util.{ProjectConfig, VmcConstants}
 import org.apache.flink.api.common.state.MapStateDescriptor
 import org.apache.flink.api.common.typeinfo.{BasicTypeInfo, TypeHint, TypeInformation}
@@ -48,10 +48,21 @@ class VmcETLService extends TService {
 
     val controlPlanDimConfigBroadcastDataStream = generaterBroadcastDataStream(vmcControlPlanConfigDataStream)
 
-    vmcSourceDataTream.keyBy(inputValue => {
+    val filterToolDataTream = vmcSourceDataTream.keyBy(inputValue => {
       val traceId = inputValue.get(VmcConstants.TRACE_ID).asText("-1")
+      traceId
     }).connect(controlPlanDimConfigBroadcastDataStream)
       .process(new VmcFilterToolBroadCastProcessFunction)
+      .name("vmc filter tool")
+      .uid("vmc filter tool")
+
+    filterToolDataTream.keyBy(inputValue => {
+      val traceId = inputValue.get(VmcConstants.TRACE_ID).asText("-1")
+      traceId
+    }).connect(controlPlanDimConfigBroadcastDataStream)
+      .process(new VmcMatchControlPlanBroadCastProcessFunction)
+      .name("vmc match controlPlan")
+      .uid("vmc match controlPlan")
 
 
 
