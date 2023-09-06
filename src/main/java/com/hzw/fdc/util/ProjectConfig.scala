@@ -553,6 +553,16 @@ object ProjectConfig {
   var CHECKPOINT_TIME_OUT_VMC_INDICATOR_JOB = 600000
 
 
+  var KAFKA_CONSUMER_GROUP_VMC_ETL_JOB = "consumer-group-vmc-etl-job"
+  var KAFKA_CONSUMER_GROUP_VMC_WINDOW_JOB = "consumer-group-vmc-window-job"
+  var KAFKA_CONSUMER_GROUP_VMC_INDICATOR_JOB = "consumer-group-vmc-indicator-job"
+
+  var KAFKA_VMC_DATA_TOPIC = "mainfab_data_topic"
+  var KAFKA_VMC_ETL_TOPIC = "vmc_etl_topic"
+  var KAFKA_VMC_WINDOW_TOPIC = "vmc_window_topic"
+  var KAFKA_VMC_INDICATOR_TOPIC = "vmc_indicator_topic"
+  var KAFKA_VMC_CONTROLPLAN_CONFIG_TOPIC = "vmc_controlplan_config_topic"
+
   //******************************************************* VMC END ***************************************************
 
 
@@ -1195,7 +1205,16 @@ object ProjectConfig {
     CHECKPOINT_INTERVAL_VMC_INDICATOR_JOB = configname.get("checkpoint.interval.vmc.indicator.job",CHECKPOINT_INTERVAL_VMC_INDICATOR_JOB.toString).trim.toInt
     CHECKPOINT_TIME_OUT_VMC_INDICATOR_JOB = configname.get("checkpoint.time.out.vmc.indicator.job",CHECKPOINT_TIME_OUT_VMC_INDICATOR_JOB.toString).trim.toInt
 
+    KAFKA_CONSUMER_GROUP_VMC_ETL_JOB = configname.get("consumer.group.vmc.etl.job",KAFKA_CONSUMER_GROUP_VMC_ETL_JOB.toString).trim
+    KAFKA_CONSUMER_GROUP_VMC_WINDOW_JOB = configname.get("consumer.group.vmc.window.job",KAFKA_CONSUMER_GROUP_VMC_WINDOW_JOB.toString).trim
+    KAFKA_CONSUMER_GROUP_VMC_INDICATOR_JOB = configname.get("consumer.group.vmc.indicator.job",KAFKA_CONSUMER_GROUP_VMC_INDICATOR_JOB.toString).trim
 
+
+    KAFKA_VMC_DATA_TOPIC = configname.get("kafka.vmc.data.topic",KAFKA_VMC_DATA_TOPIC.toString).trim
+    KAFKA_VMC_ETL_TOPIC = configname.get("kafka.vmc.etl.topic",KAFKA_VMC_ETL_TOPIC.toString).trim
+    KAFKA_VMC_WINDOW_TOPIC = configname.get("kafka.vmc.window.topic",KAFKA_VMC_WINDOW_TOPIC.toString).trim
+    KAFKA_VMC_INDICATOR_TOPIC = configname.get("kafka.vmc.indicator.topic",KAFKA_VMC_INDICATOR_TOPIC.toString).trim
+    KAFKA_VMC_CONTROLPLAN_CONFIG_TOPIC = configname.get("kafka.vmc.controlplan.config.topic",KAFKA_VMC_CONTROLPLAN_CONFIG_TOPIC.toString).trim
 
     //******************************************************* VMC END ***************************************************
 

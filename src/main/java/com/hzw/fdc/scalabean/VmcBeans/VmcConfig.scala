@@ -6,7 +6,7 @@ package com.hzw.fdc.scalabean.VmcBeans
  * @date 2023/9/5 10:04
  * @description VmcConfigData
  */
-case class VmcConfig[T]()(`dataType`:String,
+case class VmcConfig[T](`dataType`:String,
                           serialNo:String,
                           timestamp:Long,
                           status:String,
