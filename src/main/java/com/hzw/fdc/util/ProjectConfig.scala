@@ -534,6 +534,12 @@ object ProjectConfig {
 
 
   //******************************************************* VMC START ***************************************************
+  var SET_PARALLELISM_VMC_ALL_JOB = 1
+  var CHECKPOINT_ENABLE_VMC_ALL_JOB = true
+  var CHECKPOINT_STATE_BACKEND_VMC_ALL_JOB = "rocksdb"
+  var CHECKPOINT_INTERVAL_VMC_ALL_JOB = 60000
+  var CHECKPOINT_TIME_OUT_VMC_ALL_JOB = 600000
+
   var SET_PARALLELISM_VMC_ETL_JOB = 1
   var CHECKPOINT_ENABLE_VMC_ETL_JOB = true
   var CHECKPOINT_STATE_BACKEND_VMC_ETL_JOB = "rocksdb"
@@ -1185,6 +1191,13 @@ object ProjectConfig {
 
 
     //******************************************************* VMC START ***************************************************
+
+    SET_PARALLELISM_VMC_ALL_JOB = configname.get("set.parallelism.vmc.all.job",SET_PARALLELISM_VMC_ALL_JOB.toString).trim.toInt
+    CHECKPOINT_ENABLE_VMC_ALL_JOB = configname.get("checkpoint.enable.vmc.all.job",CHECKPOINT_ENABLE_VMC_ALL_JOB.toString).trim.toBoolean
+    CHECKPOINT_STATE_BACKEND_VMC_ALL_JOB = configname.get("checkpoint.state.backend.vmc.all.job",CHECKPOINT_STATE_BACKEND_VMC_ALL_JOB).trim
+    CHECKPOINT_INTERVAL_VMC_ALL_JOB = configname.get("checkpoint.interval.vmc.all.job",CHECKPOINT_INTERVAL_VMC_ALL_JOB.toString).trim.toInt
+    CHECKPOINT_TIME_OUT_VMC_ALL_JOB = configname.get("checkpoint.time.out.vmc.all.job",CHECKPOINT_TIME_OUT_VMC_ALL_JOB.toString).trim.toInt
+
 
     SET_PARALLELISM_VMC_ETL_JOB = configname.get("set.parallelism.vmc.etl.job",SET_PARALLELISM_VMC_ETL_JOB.toString).trim.toInt
     CHECKPOINT_ENABLE_VMC_ETL_JOB = configname.get("checkpoint.enable.vmc.etl.job",CHECKPOINT_ENABLE_VMC_ETL_JOB.toString).trim.toBoolean

@@ -1,7 +1,7 @@
 package com.hzw.fdc.application.Vmc
 
 import com.hzw.fdc.common.TApplication
-import com.hzw.fdc.controller.Vmc.{VmcETLController}
+import com.hzw.fdc.controller.Vmc.VmcAllController
 import com.hzw.fdc.util.{LocalPropertiesConfig, ProjectConfig, VmcConstants}
 import org.apache.commons.lang3.SystemUtils
 import org.apache.flink.api.java.utils.ParameterTool
@@ -12,7 +12,7 @@ import org.apache.flink.api.java.utils.ParameterTool
  * @date 2023/8/26 11:04
  * @description VmcIndicatorApplication
  */
-object VmcETLApplication extends App with TApplication {
+object VmcAllApplication extends App with TApplication {
 
   // todo 1- 获取配置文件的路径
   if (SystemUtils.IS_OS_WINDOWS) {  // 本地调试
@@ -33,8 +33,8 @@ object VmcETLApplication extends App with TApplication {
 
 
   start({
-    val controller = new VmcETLController
+    val controller = new VmcAllController
     controller.execute()
-  }, jobName = VmcConstants.VmcETLJob)
+  }, jobName = VmcConstants.VmcAllJob)
 
 }

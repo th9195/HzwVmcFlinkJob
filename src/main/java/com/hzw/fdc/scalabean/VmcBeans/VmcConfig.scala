@@ -12,14 +12,28 @@ case class VmcConfig[T](`dataType`:String,
                           status:String,
                           data:T)
 
+//case class VmcControlPlanConfig(controlPlanId:String,
+//                               toolNameList:List[String],
+//                               recipeNameList:List[String],
+//                               stageName:String,
+//                               route:String,
+//                               vmcSensorInfoList:List[VmcSensorInfo],
+//                               calcTypeList:List[String],
+//                               windowType:String)
+
+
 case class VmcControlPlanConfig(controlPlanId:String,
-                               toolNameList:List[String],
-                               recipeNameList:List[String],
-                               stageName:String,
-                               route:String,
-                               vmcSensorInfoList:List[VmcSensorInfo],
-                               calcTypeList:List[String],
-                               windowType:String)
+                                toolName:String,
+                                recipeName:String,
+                                stageName:String,
+                                route:String,
+                                vmcSensorInfoList:List[VmcSensorInfo],
+                                calcTypeList:List[String],
+                                windowType:String,
+                                rawDataRangeU:Long,
+                                rawDataRangeL:Long)
+
+
 
 case class VmcSensorInfo(vmcSensorMesName:String,
                          vmcSensorFdcName:String)

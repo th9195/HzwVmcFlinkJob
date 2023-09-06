@@ -25,6 +25,7 @@ object VmcConstants {
 
 
 
+  val VmcAllJob="VmcAllApplication"
   val VmcETLJob="VmcETLApplication"
   val VmcWindowJob="VmcWindowApplication"
   val VmcIndicatorJob="VmcIndicatorApplication"

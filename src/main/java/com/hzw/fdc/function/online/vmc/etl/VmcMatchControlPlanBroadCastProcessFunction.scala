@@ -81,18 +81,7 @@ class VmcMatchControlPlanBroadCastProcessFunction() extends KeyedBroadcastProces
 
 
   def parseVmcControlPlanConfig(vmcConfig: VmcConfig[VmcControlPlanConfig]) = {
-    val vmcControlPlanConfig = vmcConfig.data
-    val toolNameList = vmcControlPlanConfig.toolNameList
-    val recipeNameList = vmcControlPlanConfig.recipeNameList
-    val route = vmcControlPlanConfig.route
-    val stageName = vmcControlPlanConfig.stageName
-    vmcControlPlanConfig.
 
-    toolNameList.foreach(toolName => {
-      recipeNameList.foreach(recipeName => {
-
-      })
-    })
 
 
   }

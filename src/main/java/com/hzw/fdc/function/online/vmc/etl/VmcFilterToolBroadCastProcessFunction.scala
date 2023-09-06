@@ -107,9 +107,7 @@ class VmcFilterToolBroadCastProcessFunction() extends KeyedBroadcastProcessFunct
 
 
   def parseVmcControlPlanConfig(vmcConfig: VmcConfig[VmcControlPlanConfig]) = {
-    val vmcControlPlanConfig = vmcConfig.data
-    val toolNameList: List[String] = vmcControlPlanConfig.toolNameList
-    allToolNameConfigList ++= toolNameList
+
   }
 
 
