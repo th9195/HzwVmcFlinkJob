@@ -13,9 +13,13 @@ object VmcConstants {
   val CONFIG = "config"
 
   val DATA_TYPE = "dataType"
+  val EVENT_START = "eventStart"
+  val EVENT_END = "eventEnd"
+  val RAWDATA = "rawData"
   val TRACE_ID = "traceId"
   val TOOL_NAME = "toolName"
   val CHAMBER_NAME = "chamberName"
+  val RECIPE_NAME = "recipeName"
 
   val earliest=  "earliest"
   val latest=  "latest"

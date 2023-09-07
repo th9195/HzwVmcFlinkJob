@@ -569,6 +569,15 @@ object ProjectConfig {
   var KAFKA_VMC_INDICATOR_TOPIC = "vmc_indicator_topic"
   var KAFKA_VMC_CONTROLPLAN_CONFIG_TOPIC = "vmc_controlplan_config_topic"
 
+
+  // oracle
+  var VMC_ORACLE_DRIVER_CLASS = "oracle.jdbc.driver.OracleDriver"
+  var VMC_ORACLE_URL = "jdbc:oracle:thin:@10.1.10.208:1522:ORCLCDB"
+  var VMC_ORACLE_USER: String = "mainfabdev"
+  var VMC_ORACLE_PASSWORD: String = "mainfabdev"
+  var VMC_ORACLE_POOL_MIN_SIZE = 2
+  var VMC_ORACLE_POOL_MAX_SIZE = 5
+
   //******************************************************* VMC END ***************************************************
 
 

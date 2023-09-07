@@ -3,6 +3,7 @@ package com.hzw.fdc.service.Vmc
 import com.fasterxml.jackson.databind.JsonNode
 import com.hzw.fdc.common.{TDao, TService}
 import com.hzw.fdc.dao.Vmc.VmcAllDao
+import com.hzw.fdc.function.online.vmc.all.{VmcAllEtlProcessFunction, VmcAllReadConfigFromOracleProcessFunction}
 import com.hzw.fdc.function.online.vmc.etl.{VmcFilterToolBroadCastProcessFunction, VmcMatchControlPlanBroadCastProcessFunction}
 import com.hzw.fdc.util.{ProjectConfig, VmcConstants}
 import org.apache.flink.api.common.state.MapStateDescriptor
@@ -48,21 +49,22 @@ class VmcAllService extends TService {
 
     val controlPlanDimConfigBroadcastDataStream = generaterBroadcastDataStream(vmcControlPlanConfigDataStream)
 
-    val filterToolDataTream = vmcSourceDataTream.keyBy(inputValue => {
+    // todo 过滤 + 矫正eventStart / rawData / eventEnd 顺序
+    val etlDataTream = vmcSourceDataTream.keyBy(inputValue => {
       val traceId = inputValue.get(VmcConstants.TRACE_ID).asText("-1")
       traceId
-    }).connect(controlPlanDimConfigBroadcastDataStream)
-      .process(new VmcFilterToolBroadCastProcessFunction)
-      .name("vmc filter tool")
-      .uid("vmc filter tool")
+    }).process(new VmcAllEtlProcessFunction)
+      .name("vmc all etl")
+      .uid("vmc all etl")
 
-    filterToolDataTream.keyBy(inputValue => {
+    etlDataTream.keyBy(inputValue => {
       val traceId = inputValue.get(VmcConstants.TRACE_ID).asText("-1")
       traceId
-    }).connect(controlPlanDimConfigBroadcastDataStream)
-      .process(new VmcMatchControlPlanBroadCastProcessFunction)
-      .name("vmc match controlPlan")
-      .uid("vmc match controlPlan")
+    }).process(new VmcAllReadConfigFromOracleProcessFunction)
+      .name("vmc all read config from oracle")
+      .uid("vmc all read config from oracle")
+
+
 
 
 
