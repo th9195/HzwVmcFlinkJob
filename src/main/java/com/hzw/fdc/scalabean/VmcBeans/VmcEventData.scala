@@ -27,6 +27,28 @@ case class VmcEventData(dataType: String,
                         lotMESInfo: List[Option[VmcLot]],
                         errorCode: Option[Long])
 
+
+case class VmcEventDataMatchControlPlan(dataType: String,
+                                        locationName: String,
+                                        moduleName: String,
+                                        toolName: String,
+                                        chamberName: String,
+                                        recipeName: String,
+                                        var recipeActual:Boolean = true,
+                                        runStartTime: Long,
+                                        runEndTime: Long,
+                                        runId: String,
+                                        traceId: String,
+                                        DCType: String,
+                                        dataMissingRatio: Double,
+                                        timeRange: Long,
+                                        completed: String,
+                                        materialName: String,
+                                        materialActual:Boolean = true,
+                                        lotMESInfo: List[Option[VmcLot]],
+                                        errorCode: Option[Long],
+                                        vmcControlPlanConfig:VmcControlPlanConfig)
+
 case class VmcLot(lotName: Option[String],
                  carrier: Option[String],
                  layer: Option[String],

@@ -24,7 +24,7 @@ case class VmcConfig[T](`dataType`:String,
 
 case class VmcControlPlanConfig(controlPlanId:String,
                                 toolName:String,
-                                recipeName:String,
+                                recipeSubName:String,
                                 stageName:String,
                                 route:String,
                                 vmcSensorInfoList:List[VmcSensorInfo],
