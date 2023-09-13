@@ -3,7 +3,7 @@ package com.hzw.fdc.service.Vmc
 import com.fasterxml.jackson.databind.JsonNode
 import com.hzw.fdc.common.{TDao, TService}
 import com.hzw.fdc.dao.Vmc.VmcAllDao
-import com.hzw.fdc.function.online.vmc.all.{VmcAllEtlProcessFunction, VmcAllReadConfigFromOracleProcessFunction}
+import com.hzw.fdc.function.online.vmc.all.{VmcAllAddStepProcessFunction, VmcAllEtlProcessFunction, VmcAllMatchControlPlanProcessFunction}
 import com.hzw.fdc.function.online.vmc.etl.{VmcFilterToolBroadCastProcessFunction, VmcMatchControlPlanBroadCastProcessFunction}
 import com.hzw.fdc.util.{ProjectConfig, VmcConstants}
 import org.apache.flink.api.common.state.MapStateDescriptor
@@ -57,12 +57,40 @@ class VmcAllService extends TService {
       .name("vmc all etl")
       .uid("vmc all etl")
 
-    etlDataTream.keyBy(inputValue => {
+
+    /**
+     * 1- 从oracle 中读取策略信息
+     * 2- 校验策略信息
+     * 3- 匹配controlplan
+     * 4- run 的数据 与 controlPlan 是一对多的关系
+     *    一个run 可以匹配到多个controlPlan
+     * 5- 如果一个run匹配了多个contorlplan, 整个run 会copy N倍
+     */
+    val matchedControlPlanDataTream = etlDataTream.keyBy(inputValue => {
       val traceId = inputValue.get(VmcConstants.TRACE_ID).asText("-1")
       traceId
-    }).process(new VmcAllReadConfigFromOracleProcessFunction)
-      .name("vmc all read config from oracle")
-      .uid("vmc all read config from oracle")
+    }).process(new VmcAllMatchControlPlanProcessFunction)
+      .name("vmc all match controlplan")
+      .uid("vmc all match controlplan")
+
+    /**
+     * 1- keyby traceId + controlPlanId  : 因为一个run匹配上了多个controlPlan ,数据copy份;
+     * 2- 给每个rawData 数据添加stepId stepName
+     * 3- 给每个rawData 数据添加index编号
+     * 4- rawData中的sensorList 信息只保留controlPlanConfig中使用到的sensorAlias
+     * 5- 讲一个Run 拆分成多份数据：以stepId为单位
+     * 6- 在eventStart/eventEnd中添加stepId字段
+     */
+    val addStepDataTream = matchedControlPlanDataTream.keyBy(inputValue => {
+      val traceId = inputValue.get(VmcConstants.TRACE_ID).asText("-1")
+      val controlPlanId = inputValue.get(VmcConstants.CONTROLPLAN_ID).asText("-1")
+      traceId + controlPlanId
+    }).process(new VmcAllAddStepProcessFunction)
+      .name("vmc all add step index ")
+      .uid("vmc all add step index ")
+
+
+    addStepDataTream
 
 
 

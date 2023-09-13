@@ -3,7 +3,7 @@ package com.hzw.fdc.function.online.vmc.all
 import com.fasterxml.jackson.databind.JsonNode
 import com.hzw.fdc.json.JsonUtil.{beanToJsonNode, toBean}
 import com.hzw.fdc.json.MarshallableImplicits.Marshallable
-import com.hzw.fdc.scalabean.VmcBeans.{VmcConfig, VmcControlPlanConfig, VmcEventData, VmcEventDataMatchControlPlan, VmcLot, VmcRawData}
+import com.hzw.fdc.scalabean.VmcBeans.{VmcConfig, VmcControlPlanConfig, VmcEventData, VmcEventDataMatchControlPlan, VmcLot, VmcRawData, VmcRawDataMatchedControlPlan, VmcSensorInfo}
 import com.hzw.fdc.scalabean._
 import com.hzw.fdc.util.{ExceptionInfo, MainFabConstants, ProjectConfig, VmcConstants}
 import org.apache.flink.api.common.state._
@@ -21,9 +21,9 @@ import scala.collection.mutable.ListBuffer
 import scala.util.control.Breaks.{break, breakable}
 
 
-class VmcAllReadConfigFromOracleProcessFunction() extends KeyedProcessFunction[String, JsonNode,  JsonNode] {
+class VmcAllMatchControlPlanProcessFunction() extends KeyedProcessFunction[String, JsonNode,  JsonNode] {
 
-  private val logger: Logger = LoggerFactory.getLogger(classOf[VmcAllReadConfigFromOracleProcessFunction])
+  private val logger: Logger = LoggerFactory.getLogger(classOf[VmcAllMatchControlPlanProcessFunction])
 
   private var vmcEventDataMatchControlPlanListState: ListState[VmcEventDataMatchControlPlan] = _
 
@@ -67,12 +67,11 @@ class VmcAllReadConfigFromOracleProcessFunction() extends KeyedProcessFunction[S
 
       }else if (dataType == VmcConstants.EVENT_END){
 
-        collector.collect(inputValue)
+        processEventEnd(inputValue,context,collector)
 
       }else if (dataType == VmcConstants.RAWDATA){
 
-        collector.collect(inputValue)
-
+        processRawData(inputValue,context,collector)
       }
 
     }catch  {
@@ -83,25 +82,80 @@ class VmcAllReadConfigFromOracleProcessFunction() extends KeyedProcessFunction[S
     }
   }
 
+  def processEventEnd(inputValue: JsonNode, context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context, collector: Collector[JsonNode]) = {
 
+    try{
+      val eventEndData = toBean[VmcEventData](inputValue)
+      collectEventEndData(eventEndData,context,collector)
+    }catch{
+      case e:Exception => {
+        logger.error(s"processEventEnd error ! inputValue == ${inputValue}")
+      }
+    }
+  }
+
+  def processRawData(inputValue: JsonNode, context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context, collector: Collector[JsonNode]) = {
+
+    try{
+      val vmcRawData = toBean[VmcRawData](inputValue)
+      collectRawData(vmcRawData,context,collector)
+    }catch{
+      case e:Exception => {
+        logger.error(s"processRawData error ! inputValue == ${inputValue}")
+      }
+    }
+  }
 
   def processEventStart(inputValue: JsonNode, context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context, collector: Collector[JsonNode]) = {
-    val eventStartData = toBean[VmcEventData](inputValue)
-    val lotMESInfo = eventStartData.lotMESInfo
-    if(null != lotMESInfo && lotMESInfo.nonEmpty){
-      // 匹配vmcControlPlan
-      matchVmcControlPlan(eventStartData,context,collector)
-      // 分发eventStart
-      collectEventStartData(eventStartData,context,collector)
 
-    }else{
-      logger.error(s"eventStart lotMESInfo is null ! \n " +
-        s"eventStartData == ${eventStartData.toJson}")
+    try{
+      val eventStartData = toBean[VmcEventData](inputValue)
+      val lotMESInfo = eventStartData.lotMESInfo
+      if(null != lotMESInfo && lotMESInfo.nonEmpty){
+        // 匹配vmcControlPlan
+        matchVmcControlPlan(eventStartData,context,collector)
+        // 分发eventStart
+        collectEventStartData(eventStartData,context,collector)
+
+      }else{
+        logger.error(s"eventStart lotMESInfo is null ! \n " +
+          s"eventStartData == ${eventStartData.toJson} ; inputValue == ${inputValue}")
+      }
+    }catch {
+      case e:Exception => {
+        logger.error(s"processEventStart error ! ")
+      }
     }
+
 
   }
 
 
+  def judgeVmcControlPlanConfig(vmcControlPlanConfig: VmcControlPlanConfig): Boolean = {
+    var res = true
+
+    if(null == vmcControlPlanConfig){
+      res = false
+    }else{
+      val calcTypeList = vmcControlPlanConfig.calcTypeList
+      if(null == calcTypeList || !calcTypeList.nonEmpty){
+        res = false
+      }
+
+      val vmcSensorInfoList: List[VmcSensorInfo] = vmcControlPlanConfig.vmcSensorInfoList
+      if(null == vmcSensorInfoList || !vmcSensorInfoList.nonEmpty){
+        res = false
+      }
+
+      val rawDataRangeL = vmcControlPlanConfig.rawDataRangeL
+      val rawDataRangeU= vmcControlPlanConfig.rawDataRangeU
+      if(null == rawDataRangeL || null == rawDataRangeU ||  1 < rawDataRangeL ||  1 < rawDataRangeU || rawDataRangeL > rawDataRangeU){
+        res = false
+      }
+    }
+
+    res
+  }
 
   def matchVmcControlPlan(vmcEventData: VmcEventData, context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context, collector: Collector[JsonNode]) = {
     val toolName = vmcEventData.toolName
@@ -112,13 +166,18 @@ class VmcAllReadConfigFromOracleProcessFunction() extends KeyedProcessFunction[S
       val lotInfo = lot.get
       val stageName = lotInfo.stage
       val route = lotInfo.route
-      if (!route.isEmpty && !stageName.isEmpty) {
+      if (null != route && !route.isEmpty && null != stageName && !stageName.isEmpty) {
         // todo 点查oracle
         val vmcControlPlanConfigList = OracleUtil.queryVmcOracle(toolName, route.get, stageName.get)
 
         vmcControlPlanConfigList.foreach(vmcControlPlanConfig => {
+
+          val configIsOk:Boolean = judgeVmcControlPlanConfig(vmcControlPlanConfig)
+          if(!configIsOk){
+            logger.warn(s"controlPlanConfig 信息有误！vmcControlPlanConfig == ${vmcControlPlanConfig.toJson} ")
+          }
           val recipeSubName = vmcControlPlanConfig.recipeSubName
-          if(recipeName.contains(recipeSubName)){
+          if(configIsOk && recipeName.contains(recipeSubName)){
             // todo 匹配上vmcControlPlanConfig
             cacheStateMatchedEventStartData(vmcEventData,vmcControlPlanConfig,context,collector)
           }
@@ -127,8 +186,6 @@ class VmcAllReadConfigFromOracleProcessFunction() extends KeyedProcessFunction[S
     })
 
   }
-
-
 
   def cacheStateMatchedEventStartData(vmcEventData: VmcEventData,
                                       vmcControlPlanConfig: VmcControlPlanConfig,
@@ -159,7 +216,18 @@ class VmcAllReadConfigFromOracleProcessFunction() extends KeyedProcessFunction[S
       materialActual = vmcEventData.materialActual,
       lotMESInfo = vmcEventData.lotMESInfo,
       errorCode = vmcEventData.errorCode,
-      vmcControlPlanConfig = vmcControlPlanConfig)
+      vmcControlPlanConfig = vmcControlPlanConfig,
+      stepId = -1)
+  }
+
+  def generateVmcRawDataMatchedControlPlan(rawData: VmcRawData, vmcControlPlanConfig: VmcControlPlanConfig) = {
+    VmcRawDataMatchedControlPlan(dataType = rawData.dataType,
+      toolName = rawData.toolName,
+      chamberName = rawData.chamberName,
+      timestamp = rawData.timestamp,
+      traceId = rawData.traceId,
+      data = rawData.data,
+      controlPlanId = vmcControlPlanConfig.controlPlanId)
   }
 
 
@@ -170,11 +238,23 @@ class VmcAllReadConfigFromOracleProcessFunction() extends KeyedProcessFunction[S
     })
   }
 
-  def collectRawData(rawData: VmcRawData, context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context, collector: Collector[JsonNode]) = {
 
+  def collectRawData(rawData: VmcRawData, context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context, collector: Collector[JsonNode]) = {
+    val vmcEventDataMatchControlPlanList: List[VmcEventDataMatchControlPlan] = vmcEventDataMatchControlPlanListState.get.toList
+    vmcEventDataMatchControlPlanList.foreach(elem => {
+      val vmcControlPlanConfig = elem.vmcControlPlanConfig
+      val vmcRawDataMatchedControlPlan = generateVmcRawDataMatchedControlPlan(rawData, vmcControlPlanConfig)
+
+      collector.collect(beanToJsonNode[VmcRawDataMatchedControlPlan](vmcRawDataMatchedControlPlan))
+    })
   }
 
   def collectEventEndData(eventEndData: VmcEventData, context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context, collector: Collector[JsonNode]) = {
-
+    val vmcEventDataMatchControlPlanList: List[VmcEventDataMatchControlPlan] = vmcEventDataMatchControlPlanListState.get.toList
+    vmcEventDataMatchControlPlanList.foreach(elem => {
+      val vmcControlPlanConfig = elem.vmcControlPlanConfig
+      val vmcEventDataMatchControlPlan = generateVmcEventDataMatchControlPlan(eventEndData, vmcControlPlanConfig)
+      collector.collect(beanToJsonNode[VmcEventDataMatchControlPlan](vmcEventDataMatchControlPlan))
+    })
   }
 }

@@ -23,4 +23,24 @@ case class VmcSensorData(svid: String,
                         unit: Option[String])
 
 
+case class VmcRawDataMatchedControlPlan(dataType: String,
+                                        toolName: String,
+                                        chamberName: String,
+                                        timestamp: Long,
+                                        traceId: String,
+                                        @BeanProperty var data: List[VmcSensorData],
+                                        controlPlanId : String)
+
+
+case class VmcRawDataAddStep(dataType: String,
+                             toolName: String,
+                             chamberName: String,
+                             timestamp: Long,
+                             traceId: String,
+                             index:Long,
+                             @BeanProperty var data: List[VmcSensorData],
+                             controlPlanId : String,
+                             stepId: Long,
+                             stepName: String)
+
 

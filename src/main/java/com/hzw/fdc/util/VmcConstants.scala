@@ -20,9 +20,12 @@ object VmcConstants {
   val TOOL_NAME = "toolName"
   val CHAMBER_NAME = "chamberName"
   val RECIPE_NAME = "recipeName"
+  val CONTROLPLAN_ID = "controlPlanId"
 
   val earliest=  "earliest"
   val latest=  "latest"
+
+  val NA = "N/A"
 
 
   val VMC_CONTROLPLAN_CONFIG = "vmcControlPlanConfig"
@@ -41,6 +44,7 @@ object VmcConstants {
   val VMC_ETL_JOB_CONTROLPLAN_CONFIG_KAFKA_SOURCE_UID = "vmc_etl_job_controlPlan_config_kafkaSource"
   val VMC_WINDOW_JOB_CONTROLPLAN_CONFIG_KAFKA_SOURCE_UID = "vmc_window_job_controlPlan_config_kafkaSource"
   val VMC_INDICATOR_JOB_CONTROLPLAN_CONFIG_KAFKA_SOURCE_UID = "vmc_indicator_job_controlPlan_config_kafkaSource"
+
 
 
 }
