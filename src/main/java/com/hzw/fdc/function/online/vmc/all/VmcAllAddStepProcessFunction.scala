@@ -380,6 +380,7 @@ class VmcAllAddStepProcessFunction() extends KeyedProcessFunction[String, JsonNo
       stepIdList.foreach(stepId => {
         val vmcEventDataMatchControlPlan = toBean[VmcEventDataMatchControlPlan](inputValue)
         vmcEventDataMatchControlPlan.stepId = stepId.toLong
+        vmcEventDataMatchControlPlan.indexCount = vmcRawDataIndexState.value()
 
         collector.collect(beanToJsonNode[VmcEventDataMatchControlPlan](vmcEventDataMatchControlPlan))
 

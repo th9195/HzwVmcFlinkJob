@@ -217,7 +217,8 @@ class VmcAllMatchControlPlanProcessFunction() extends KeyedProcessFunction[Strin
       lotMESInfo = vmcEventData.lotMESInfo,
       errorCode = vmcEventData.errorCode,
       vmcControlPlanConfig = vmcControlPlanConfig,
-      stepId = -1)
+      stepId = -1,
+      indexCount = -1)
   }
 
   def generateVmcRawDataMatchedControlPlan(rawData: VmcRawData, vmcControlPlanConfig: VmcControlPlanConfig) = {

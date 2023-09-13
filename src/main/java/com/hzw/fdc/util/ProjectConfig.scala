@@ -565,6 +565,8 @@ object ProjectConfig {
 
   var KAFKA_VMC_DATA_TOPIC = "mainfab_data_topic"
   var KAFKA_VMC_ETL_TOPIC = "vmc_etl_topic"
+  var KAFKA_VMC_MATCH_CONTROLPLAN_TOPIC = "vmc_match_controlplan_topic"
+  var KAFKA_VMC_ADD_STEP_TOPIC = "vmc_add_step_topic"
   var KAFKA_VMC_WINDOW_TOPIC = "vmc_window_topic"
   var KAFKA_VMC_INDICATOR_TOPIC = "vmc_indicator_topic"
   var KAFKA_VMC_CONTROLPLAN_CONFIG_TOPIC = "vmc_controlplan_config_topic"
@@ -577,6 +579,12 @@ object ProjectConfig {
   var VMC_ORACLE_PASSWORD: String = "mainfabdev"
   var VMC_ORACLE_POOL_MIN_SIZE = 2
   var VMC_ORACLE_POOL_MAX_SIZE = 5
+
+
+  var VMC_ETL_DEBUG_EANBLE = false
+  var VMC_MATCH_CONTROLPLAN_DEBUG_EANBLE = false
+  var VMC_ADD_STEP_DEBUG_EANBLE = false
+  var VMC_INDICATOR_DEBUG_EANBLE = false
 
   //******************************************************* VMC END ***************************************************
 
@@ -1234,9 +1242,25 @@ object ProjectConfig {
 
     KAFKA_VMC_DATA_TOPIC = configname.get("kafka.vmc.data.topic",KAFKA_VMC_DATA_TOPIC.toString).trim
     KAFKA_VMC_ETL_TOPIC = configname.get("kafka.vmc.etl.topic",KAFKA_VMC_ETL_TOPIC.toString).trim
+    KAFKA_VMC_MATCH_CONTROLPLAN_TOPIC = configname.get("kafka.vmc.match.controlplan.topic",KAFKA_VMC_MATCH_CONTROLPLAN_TOPIC.toString).trim
+    KAFKA_VMC_ADD_STEP_TOPIC = configname.get("kafka.vmc.add.step.topic",KAFKA_VMC_ADD_STEP_TOPIC.toString).trim
     KAFKA_VMC_WINDOW_TOPIC = configname.get("kafka.vmc.window.topic",KAFKA_VMC_WINDOW_TOPIC.toString).trim
     KAFKA_VMC_INDICATOR_TOPIC = configname.get("kafka.vmc.indicator.topic",KAFKA_VMC_INDICATOR_TOPIC.toString).trim
     KAFKA_VMC_CONTROLPLAN_CONFIG_TOPIC = configname.get("kafka.vmc.controlplan.config.topic",KAFKA_VMC_CONTROLPLAN_CONFIG_TOPIC.toString).trim
+
+
+    // vmc oracle 配置信息
+    VMC_ORACLE_URL = configname.get("vmc.oracle.url",VMC_ORACLE_URL.toString).trim
+    VMC_ORACLE_USER = configname.get("vmc.oracle.user",VMC_ORACLE_USER.toString).trim
+    VMC_ORACLE_PASSWORD = configname.get("vmc.oracle.password",VMC_ORACLE_PASSWORD.toString).trim
+    VMC_ORACLE_POOL_MIN_SIZE = configname.get("vmc.oracle.pool.min.size",VMC_ORACLE_POOL_MIN_SIZE.toString).trim.toInt
+    VMC_ORACLE_POOL_MAX_SIZE = configname.get("vmc.oracle.pool.max.size",VMC_ORACLE_POOL_MAX_SIZE.toString).trim.toInt
+
+    // 调试输出开关
+    VMC_ETL_DEBUG_EANBLE = configname.get("vmc.etl.debug.enable",VMC_ETL_DEBUG_EANBLE.toString).trim.toBoolean
+    VMC_MATCH_CONTROLPLAN_DEBUG_EANBLE = configname.get("vmc.match.controlplan.debug.enable",VMC_MATCH_CONTROLPLAN_DEBUG_EANBLE.toString).trim.toBoolean
+    VMC_ADD_STEP_DEBUG_EANBLE = configname.get("vmc.add.step.debug.enable",VMC_ADD_STEP_DEBUG_EANBLE.toString).trim.toBoolean
+    VMC_INDICATOR_DEBUG_EANBLE = configname.get("vmc.indicator.debug.enable",VMC_INDICATOR_DEBUG_EANBLE.toString).trim.toBoolean
 
     //******************************************************* VMC END ***************************************************
 

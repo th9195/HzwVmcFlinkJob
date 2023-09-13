@@ -21,6 +21,7 @@ object VmcConstants {
   val CHAMBER_NAME = "chamberName"
   val RECIPE_NAME = "recipeName"
   val CONTROLPLAN_ID = "controlPlanId"
+  val STEP_ID = "stepId"
 
   val earliest=  "earliest"
   val latest=  "latest"

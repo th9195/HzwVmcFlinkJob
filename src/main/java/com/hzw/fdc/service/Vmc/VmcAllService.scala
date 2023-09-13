@@ -3,6 +3,7 @@ package com.hzw.fdc.service.Vmc
 import com.fasterxml.jackson.databind.JsonNode
 import com.hzw.fdc.common.{TDao, TService}
 import com.hzw.fdc.dao.Vmc.VmcAllDao
+import com.hzw.fdc.function.PublicFunction.FdcKafkaSchema
 import com.hzw.fdc.function.online.vmc.all.{VmcAllAddStepProcessFunction, VmcAllEtlProcessFunction, VmcAllMatchControlPlanProcessFunction}
 import com.hzw.fdc.function.online.vmc.etl.{VmcFilterToolBroadCastProcessFunction, VmcMatchControlPlanBroadCastProcessFunction}
 import com.hzw.fdc.util.{ProjectConfig, VmcConstants}
@@ -10,6 +11,7 @@ import org.apache.flink.api.common.state.MapStateDescriptor
 import org.apache.flink.api.common.typeinfo.{BasicTypeInfo, TypeHint, TypeInformation}
 import org.apache.flink.streaming.api.datastream.BroadcastStream
 import org.apache.flink.streaming.api.scala._
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer
 import org.slf4j.{Logger, LoggerFactory}
 
 
@@ -51,11 +53,28 @@ class VmcAllService extends TService {
 
     // todo 过滤 + 矫正eventStart / rawData / eventEnd 顺序
     val etlDataTream = vmcSourceDataTream.keyBy(inputValue => {
-      val traceId = inputValue.get(VmcConstants.TRACE_ID).asText("-1")
+      val traceId = inputValue.findPath(VmcConstants.TRACE_ID).asText("-1")
       traceId
     }).process(new VmcAllEtlProcessFunction)
       .name("vmc all etl")
       .uid("vmc all etl")
+
+    if(ProjectConfig.VMC_ETL_DEBUG_EANBLE){
+      etlDataTream.addSink(new FlinkKafkaProducer(
+        ProjectConfig.KAFKA_VMC_ETL_TOPIC,
+        new FdcKafkaSchema[JsonNode](ProjectConfig.KAFKA_VMC_ETL_TOPIC
+          //按照tool分区
+          , (elem: JsonNode) => {
+            val traceId = elem.findPath(VmcConstants.TRACE_ID).asText("-1")
+            traceId
+          }
+        )
+        , ProjectConfig.getKafkaProperties()
+        , FlinkKafkaProducer.Semantic.AT_LEAST_ONCE
+      )).name("etlDataTream dataStream sink to kafka")
+        //添加uid用于监控
+        .uid("etlDataTream dataStream sink to kafka")
+    }
 
 
     /**
@@ -67,11 +86,29 @@ class VmcAllService extends TService {
      * 5- 如果一个run匹配了多个contorlplan, 整个run 会copy N倍
      */
     val matchedControlPlanDataTream = etlDataTream.keyBy(inputValue => {
-      val traceId = inputValue.get(VmcConstants.TRACE_ID).asText("-1")
+      val traceId = inputValue.findPath(VmcConstants.TRACE_ID).asText("-1")
       traceId
     }).process(new VmcAllMatchControlPlanProcessFunction)
       .name("vmc all match controlplan")
       .uid("vmc all match controlplan")
+
+    if(ProjectConfig.VMC_MATCH_CONTROLPLAN_DEBUG_EANBLE){
+      matchedControlPlanDataTream.addSink(new FlinkKafkaProducer(
+        ProjectConfig.KAFKA_VMC_MATCH_CONTROLPLAN_TOPIC,
+        new FdcKafkaSchema[JsonNode](ProjectConfig.KAFKA_VMC_MATCH_CONTROLPLAN_TOPIC
+          //按照tool分区
+          , (elem: JsonNode) => {
+            val traceId = elem.findPath(VmcConstants.TRACE_ID).asText("-1")
+            val controlPlanId = elem.findPath(VmcConstants.CONTROLPLAN_ID).asText("-1")
+            traceId + controlPlanId
+          }
+        )
+        , ProjectConfig.getKafkaProperties()
+        , FlinkKafkaProducer.Semantic.AT_LEAST_ONCE
+      )).name("matchedControlPlanDataTream dataStream sink to kafka")
+        //添加uid用于监控
+        .uid("matchedControlPlanDataTream ProcessEnd fdcWindowData sink")
+    }
 
     /**
      * 1- keyby traceId + controlPlanId  : 因为一个run匹配上了多个controlPlan ,数据copy份;
@@ -82,16 +119,32 @@ class VmcAllService extends TService {
      * 6- 在eventStart/eventEnd中添加stepId字段
      */
     val addStepDataTream = matchedControlPlanDataTream.keyBy(inputValue => {
-      val traceId = inputValue.get(VmcConstants.TRACE_ID).asText("-1")
-      val controlPlanId = inputValue.get(VmcConstants.CONTROLPLAN_ID).asText("-1")
+      val traceId = inputValue.findPath(VmcConstants.TRACE_ID).asText("-1")
+      val controlPlanId = inputValue.findPath(VmcConstants.CONTROLPLAN_ID).asText("-1")
       traceId + controlPlanId
     }).process(new VmcAllAddStepProcessFunction)
       .name("vmc all add step index ")
       .uid("vmc all add step index ")
 
 
-    addStepDataTream
-
+    if(ProjectConfig.VMC_ADD_STEP_DEBUG_EANBLE){
+      addStepDataTream.addSink(new FlinkKafkaProducer(
+        ProjectConfig.KAFKA_VMC_ADD_STEP_TOPIC,
+        new FdcKafkaSchema[JsonNode](ProjectConfig.KAFKA_VMC_ADD_STEP_TOPIC
+          //按照tool分区
+          , (elem: JsonNode) => {
+            val traceId = elem.findPath(VmcConstants.TRACE_ID).asText("-1")
+            val controlPlanId = elem.findPath(VmcConstants.CONTROLPLAN_ID).asText("-1")
+            val stepId = elem.findPath(VmcConstants.STEP_ID).asText("-1")
+            traceId + controlPlanId + stepId
+          }
+        )
+        , ProjectConfig.getKafkaProperties()
+        , FlinkKafkaProducer.Semantic.AT_LEAST_ONCE
+      )).name("addStepDataTream dataStream sink to kafka")
+        //添加uid用于监控
+        .uid("addStepDataTream ProcessEnd fdcWindowData sink")
+    }
 
 
 

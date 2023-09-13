@@ -48,7 +48,8 @@ case class VmcEventDataMatchControlPlan(dataType: String,
                                         lotMESInfo: List[Option[VmcLot]],
                                         errorCode: Option[Long],
                                         vmcControlPlanConfig:VmcControlPlanConfig,
-                                        var stepId:Long = -1)
+                                        var stepId:Long = -1,
+                                        var indexCount:Long = -1)
 
 case class VmcLot(lotName: Option[String],
                  carrier: Option[String],
