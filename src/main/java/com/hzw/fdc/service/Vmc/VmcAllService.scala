@@ -51,7 +51,15 @@ class VmcAllService extends TService {
 
     val controlPlanDimConfigBroadcastDataStream = generaterBroadcastDataStream(vmcControlPlanConfigDataStream)
 
-    // todo 过滤 + 矫正eventStart / rawData / eventEnd 顺序
+
+    /**
+     * 1- 过滤出正常的数据
+     * 2- 顺序矫正 保证下游的数据顺序是 eventStart -> rawData(n条) -> eventEnd
+     *  处理比eventStart早到的rawData
+     *  处理比eventStart早到的eventEnd
+     * 3- 注意: 如果rawData比 eventStart eventEnd都晚到，这样的rawData无法矫正
+     *  因为有了eventStart 和 eventEnd 就表示一个Run结束了
+     */
     val etlDataTream = vmcSourceDataTream.keyBy(inputValue => {
       val traceId = inputValue.findPath(VmcConstants.TRACE_ID).asText("-1")
       traceId
@@ -156,7 +164,7 @@ class VmcAllService extends TService {
    */
   override protected def getDatas(): DataStream[JsonNode] = {
     getDao().getKafkaJsonSource(
-      ProjectConfig.KAFKA_MAINFAB_DATA_TOPIC,
+      ProjectConfig.KAFKA_VMC_DATA_TOPIC,
       ProjectConfig.KAFKA_QUORUM,
       ProjectConfig.KAFKA_CONSUMER_GROUP_VMC_ETL_JOB,
       VmcConstants.latest,
@@ -175,7 +183,7 @@ class VmcAllService extends TService {
     getDao().getKafkaJsonSource(
       topic,
       ProjectConfig.KAFKA_QUORUM,
-      ProjectConfig.KAFKA_CONSUMER_GROUP_VMC_ETL_JOB,
+      ProjectConfig.KAFKA_CONSUMER_GROUP_VMC_ALL_JOB,
       VmcConstants.latest,
       name_uid,
       name_uid)

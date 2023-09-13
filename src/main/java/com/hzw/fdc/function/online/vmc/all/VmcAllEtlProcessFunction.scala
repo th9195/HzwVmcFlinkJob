@@ -73,6 +73,7 @@ class VmcAllEtlProcessFunction() extends KeyedProcessFunction[String, JsonNode, 
       val toolName= inputValue.findPath(VmcConstants.TOOL_NAME).asText()
       val chamberName= inputValue.findPath(VmcConstants.CHAMBER_NAME).asText()
 
+      // todo 基本信息过滤
       if(!dataType.isEmpty &&
       !traceId.isEmpty &&
       !toolName.isEmpty &&
@@ -119,11 +120,13 @@ class VmcAllEtlProcessFunction() extends KeyedProcessFunction[String, JsonNode, 
     // 缓存状态
     eventStartState.update(eventStartData)
     collector.collect(inputValue)
+
+
   }
 
   def processEventEnd(inputValue: JsonNode, context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context, collector: Collector[JsonNode]): Unit = {
     val runEventStartData = eventStartState.value()
-    if(null == runEventStartData){
+    if(null != runEventStartData){
       collector.collect(inputValue)
       clearAllState()
     }else{
@@ -143,6 +146,11 @@ class VmcAllEtlProcessFunction() extends KeyedProcessFunction[String, JsonNode, 
     }
   }
 
+  /**
+   * 处理早到的rawData
+   * @param context
+   * @param collector
+   */
   def processEarlyRawData(context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context,collector: Collector[JsonNode]) = {
     var count: Int = 0
     val currentKey: String = context.getCurrentKey
@@ -159,6 +167,11 @@ class VmcAllEtlProcessFunction() extends KeyedProcessFunction[String, JsonNode, 
     }
   }
 
+  /**
+   * 处理早到的eventEnd
+   * @param context
+   * @param collector
+   */
   def processEarlyEventEnd(context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context,collector: Collector[JsonNode]): Unit = {
     val runEventEndData = earlyEventEndState.value()
     val currentKey = context.getCurrentKey
@@ -168,7 +181,11 @@ class VmcAllEtlProcessFunction() extends KeyedProcessFunction[String, JsonNode, 
     }
   }
 
+  /**
+   * 清理所有的状态变量
+   */
   def clearAllState() = {
+    logger.warn(s"clearAllState")
     eventStartState.clear()
     earlyRawDataMapState.clear()
     earlyEventEndState.clear()

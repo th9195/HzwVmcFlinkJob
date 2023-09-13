@@ -21,7 +21,6 @@ class VmcAllAddStepProcessFunction() extends KeyedProcessFunction[String, JsonNo
 
   private val logger: Logger = LoggerFactory.getLogger(classOf[VmcAllAddStepProcessFunction])
 
-
   // 记录当前stepId
   var vmcRawDataCurrentStepIdState: ValueState[Long] = _
 
@@ -115,11 +114,32 @@ class VmcAllAddStepProcessFunction() extends KeyedProcessFunction[String, JsonNo
     }
   }
 
-
-  def processEventEnd(inputValue: JsonNode, context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context, collector: Collector[JsonNode]) = {
-
+  /**
+   * 处理 eventStart 数据
+   * @param inputValue
+   * @param context
+   * @param collector
+   */
+  def processEventStart(inputValue: JsonNode, context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context, collector: Collector[JsonNode]) = {
     try{
+      updateVmcControlPlanConfigSensorListState(inputValue)
+      updateVmcEventDataMatchedControlPlan(inputValue)
+    }catch {
+      case e:Exception => {
+        logger.error(s"processEventStart error ! ")
+      }
+    }
 
+  }
+
+  /**
+   * 处理eventEnd 数据
+   * @param inputValue
+   * @param context
+   * @param collector
+   */
+  def processEventEnd(inputValue: JsonNode, context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context, collector: Collector[JsonNode]) = {
+    try{
       collectEventEnd(inputValue,context,collector)
       clearAllState()
 
@@ -130,14 +150,16 @@ class VmcAllAddStepProcessFunction() extends KeyedProcessFunction[String, JsonNo
     }
   }
 
+  /**
+   * 处理 rawData数据
+   * @param inputValue
+   * @param context
+   * @param collector
+   */
   def processRawData(inputValue: JsonNode, context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context, collector: Collector[JsonNode]) = {
-
     try{
-
       updateVmcRawDataIndexState()
-
       addStep(inputValue,context,collector)
-
     }catch{
       case e:Exception => {
         logger.error(s"processRawData error ! inputValue == ${inputValue}")
@@ -145,10 +167,18 @@ class VmcAllAddStepProcessFunction() extends KeyedProcessFunction[String, JsonNo
     }
   }
 
+  /**
+   * 更新状态变量 : vmcEventDataMatchControlPlanState
+   * @param inputValue
+   */
   def updateVmcEventDataMatchedControlPlan(inputValue: JsonNode) = {
     vmcEventDataMatchControlPlanState.update(inputValue)
   }
 
+  /**
+   * 更新状态变量 : vmcControlPlanConfigSensorListState
+   * @param inputValue
+   */
   def updateVmcControlPlanConfigSensorListState(inputValue: JsonNode) = {
     val vmcEventDataMatchControlPlan = toBean[VmcEventDataMatchControlPlan](inputValue)
     val vmcControlPlanConfig: VmcControlPlanConfig = vmcEventDataMatchControlPlan.vmcControlPlanConfig
@@ -157,26 +187,11 @@ class VmcAllAddStepProcessFunction() extends KeyedProcessFunction[String, JsonNo
       vmcControlPlanConfigSensorListState.add(elem.vmcSensorFdcName)
     })
 
-
   }
 
-
-  def processEventStart(inputValue: JsonNode, context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context, collector: Collector[JsonNode]) = {
-
-    try{
-
-      updateVmcControlPlanConfigSensorListState(inputValue)
-      updateVmcEventDataMatchedControlPlan(inputValue)
-
-    }catch {
-      case e:Exception => {
-        logger.error(s"processEventStart error ! ")
-      }
-    }
-
-  }
-
-
+  /**
+   * 更新状态变量 : vmcRawDataIndexState
+   */
   def updateVmcRawDataIndexState() = {
     val vmcRawDataIndex = vmcRawDataIndexState.value()
     if(null == vmcRawDataIndex) {
@@ -186,7 +201,72 @@ class VmcAllAddStepProcessFunction() extends KeyedProcessFunction[String, JsonNo
     }
   }
 
+  /**
+   * 更新状态变量 : vmcRawDataStepIdListState
+   * @param currentStepId
+   * @return
+   */
+  def updateVmcRawDataStepIdListState(currentStepId: Long): Boolean = {
+    val stepIdStr: String = vmcRawDataStepIdListState.value()
 
+    if(null == stepIdStr){
+      vmcRawDataStepIdListState.update(currentStepId.toString)
+      true
+    }else if(!stepIdStr.split("\\|").contains(currentStepId)){
+      var stepIdList: List[String] = stepIdStr.split("\\|").toList
+
+      stepIdList = stepIdList :+ currentStepId.toString
+      val newStepIdStr = stepIdList.mkString("|")
+      vmcRawDataStepIdListState.update(newStepIdStr)
+      true
+    }else{
+      false
+    }
+
+  }
+
+  /**
+   * 添加 stepId stepName
+   * @param inputValue
+   * @param context
+   * @param collector
+   */
+  def addStep(inputValue: JsonNode,
+              context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context,
+              collector: Collector[JsonNode]) = {
+    try {
+      val vmcRawDataMatchedControlPlan = toBean[VmcRawDataMatchedControlPlan](inputValue)
+
+      val stepIdName = getStepIdAndStepName(vmcRawDataMatchedControlPlan)
+
+      // 获取sensorDataList
+      val sensorListData: List[VmcSensorData] = getSensorListData(vmcRawDataMatchedControlPlan, logger)
+
+      // 生成VmcRawDataAddStep
+      val stepId = stepIdName._1
+      val stepName = stepIdName._2
+      val vmcRawDataAddStep: VmcRawDataAddStep = generateVmcRawDataAddStep(vmcRawDataMatchedControlPlan, stepId, stepName, sensorListData)
+
+      val isSendEventStart:Boolean = updateVmcRawDataStepIdListState(stepId)
+      // 输出 eventStart
+      if(isSendEventStart){
+        collectEventStart(stepId,collector)
+      }
+
+      // 输出 rawData
+      collectRawData(vmcRawDataAddStep,collector)
+    } catch {
+      case exception: Exception =>
+        logger.warn(ErrorCode("002003b008C", System.currentTimeMillis(), Map("rawData" -> inputValue,
+          "error" -> "add step 错误"), ExceptionInfo.getExceptionInfo(exception)).toJson)
+    }
+  }
+
+  /**
+   * 中rawData数据中 获取 stepId stepName
+   * @param vmcRawDataMatchedControlPlan
+   * @return
+   */
   def getStepIdAndStepName(vmcRawDataMatchedControlPlan:VmcRawDataMatchedControlPlan) = {
     //标注是否有重复的step
     var isOnlyOneStepID: Boolean = true
@@ -260,60 +340,13 @@ class VmcAllAddStepProcessFunction() extends KeyedProcessFunction[String, JsonNo
     (stepID,stepName)
   }
 
-
-  def updateVmcRawDataStepIdListState(currentStepId: Long): Boolean = {
-    val stepIdStr: String = vmcRawDataStepIdListState.value()
-
-    if(null == stepIdStr){
-      vmcRawDataStepIdListState.update(currentStepId.toString)
-      true
-    }else if(!stepIdStr.split("\\|").contains(currentStepId)){
-      var stepIdList: List[String] = stepIdStr.split("\\|").toList
-
-      stepIdList = stepIdList :+ currentStepId.toString
-      val newStepIdStr = stepIdList.mkString("|")
-      vmcRawDataStepIdListState.update(newStepIdStr)
-      true
-    }else{
-      false
-    }
-
-  }
-
-  def addStep(inputValue: JsonNode,
-              context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context,
-              collector: Collector[JsonNode]) = {
-    try {
-      val vmcRawDataMatchedControlPlan = toBean[VmcRawDataMatchedControlPlan](inputValue)
-
-      val stepIdName = getStepIdAndStepName(vmcRawDataMatchedControlPlan)
-
-      // 获取sensorDataList
-      val sensorListData: List[VmcSensorData] = getSensorListData(vmcRawDataMatchedControlPlan, logger)
-
-      // 生成VmcRawDataAddStep
-      val stepId = stepIdName._1
-      val stepName = stepIdName._2
-      val vmcRawDataAddStep: VmcRawDataAddStep = generatedVmcRawDataAddStep(vmcRawDataMatchedControlPlan, stepId, stepName, sensorListData)
-
-      val isSendEventStart:Boolean = updateVmcRawDataStepIdListState(stepId)
-      // 输出 eventStart
-      if(isSendEventStart){
-        collectEventStart(stepId,collector)
-      }
-
-      // 输出 rawData
-      collectRawData(vmcRawDataAddStep,collector)
-
-
-    } catch {
-      case exception: Exception =>
-        logger.warn(ErrorCode("002003b008C", System.currentTimeMillis(), Map("rawData" -> inputValue,
-          "error" -> "add step 错误"), ExceptionInfo.getExceptionInfo(exception)).toJson)
-    }
-  }
-
-  // ===============需要处理一个问题： sensorValue 不为double类型
+  /**
+   * 1- 过滤正常的sensorValue的数据
+   * 2- 保留controlPlan中配置的sensorAlias
+   * @param vmcRawDataMatchedControlPlan
+   * @param logger
+   * @return
+   */
   def getSensorListData(vmcRawDataMatchedControlPlan: VmcRawDataMatchedControlPlan, logger: Logger) = {
 
     // 不保留
@@ -331,12 +364,20 @@ class VmcAllAddStepProcessFunction() extends KeyedProcessFunction[String, JsonNo
     ).filter(one => {
       // todo 只保留策略中使用到的sensor
       val configSensorList: List[String] = vmcControlPlanConfigSensorListState.get().toList
-      configSensorList.contains(one.sensorAlias) && one != null
+      one != null && configSensorList.contains(one.sensorAlias)
     })
     sensorListData
   }
 
-  def generatedVmcRawDataAddStep(vmcRawDataMatchedControlPlan: VmcRawDataMatchedControlPlan, stepID: Long, StepName: String, sensorListData: List[VmcSensorData]) = {
+  /**
+   * 生成 对象 VmcRawDataAddStep
+   * @param vmcRawDataMatchedControlPlan
+   * @param stepID
+   * @param StepName
+   * @param sensorListData
+   * @return
+   */
+  def generateVmcRawDataAddStep(vmcRawDataMatchedControlPlan: VmcRawDataMatchedControlPlan, stepID: Long, StepName: String, sensorListData: List[VmcSensorData]) = {
     VmcRawDataAddStep(dataType = vmcRawDataMatchedControlPlan.dataType,
       toolName = vmcRawDataMatchedControlPlan.toolName,
       chamberName = vmcRawDataMatchedControlPlan.chamberName,
@@ -366,10 +407,21 @@ class VmcAllAddStepProcessFunction() extends KeyedProcessFunction[String, JsonNo
 
   }
 
+  /**
+   * 输出rawData
+   * @param vmcRawDataAddStep
+   * @param collector
+   */
   def collectRawData(vmcRawDataAddStep: VmcRawDataAddStep, collector: Collector[JsonNode]) = {
     collector.collect(beanToJsonNode[VmcRawDataAddStep](vmcRawDataAddStep))
   }
 
+  /**
+   * 输出eventEnd
+   * @param inputValue
+   * @param context
+   * @param collector
+   */
   def collectEventEnd(inputValue: JsonNode, context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context, collector: Collector[JsonNode]) = {
     val stepIdStr: String = vmcRawDataStepIdListState.value()
 
@@ -388,7 +440,13 @@ class VmcAllAddStepProcessFunction() extends KeyedProcessFunction[String, JsonNo
     }
   }
 
+  /**
+   * 清理所有的状态变量
+   */
   def clearAllState() = {
+
+    logger.warn(s"clearAllState")
+
     // 记录当前stepId
     vmcRawDataCurrentStepIdState.clear()
 

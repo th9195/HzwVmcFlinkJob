@@ -82,6 +82,14 @@ class VmcAllMatchControlPlanProcessFunction() extends KeyedProcessFunction[Strin
     }
   }
 
+
+  /**
+   * 处理eventEnd
+   *
+   * @param inputValue
+   * @param context
+   * @param collector
+   */
   def processEventEnd(inputValue: JsonNode, context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context, collector: Collector[JsonNode]) = {
 
     try{
@@ -91,6 +99,8 @@ class VmcAllMatchControlPlanProcessFunction() extends KeyedProcessFunction[Strin
       case e:Exception => {
         logger.error(s"processEventEnd error ! inputValue == ${inputValue}")
       }
+    }finally {
+      clearAllState()
     }
   }
 
@@ -106,6 +116,12 @@ class VmcAllMatchControlPlanProcessFunction() extends KeyedProcessFunction[Strin
     }
   }
 
+  /**
+   * 处理processStart
+   * @param inputValue
+   * @param context
+   * @param collector
+   */
   def processEventStart(inputValue: JsonNode, context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context, collector: Collector[JsonNode]) = {
 
     try{
@@ -119,11 +135,11 @@ class VmcAllMatchControlPlanProcessFunction() extends KeyedProcessFunction[Strin
 
       }else{
         logger.error(s"eventStart lotMESInfo is null ! \n " +
-          s"eventStartData == ${eventStartData.toJson} ; inputValue == ${inputValue}")
+          s"eventStartData == ${eventStartData.toJson} ; ")
       }
     }catch {
       case e:Exception => {
-        logger.error(s"processEventStart error ! ")
+        logger.error(s"processEventStart error ! ${e.printStackTrace()}")
       }
     }
 
@@ -131,6 +147,11 @@ class VmcAllMatchControlPlanProcessFunction() extends KeyedProcessFunction[Strin
   }
 
 
+  /**
+   * 判断查出来的策略是否有问题
+   * @param vmcControlPlanConfig
+   * @return
+   */
   def judgeVmcControlPlanConfig(vmcControlPlanConfig: VmcControlPlanConfig): Boolean = {
     var res = true
 
@@ -157,6 +178,12 @@ class VmcAllMatchControlPlanProcessFunction() extends KeyedProcessFunction[Strin
     res
   }
 
+  /**
+   * 通过点查oracle的方式匹配controlPlan
+   * @param vmcEventData
+   * @param context
+   * @param collector
+   */
   def matchVmcControlPlan(vmcEventData: VmcEventData, context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context, collector: Collector[JsonNode]) = {
     val toolName = vmcEventData.toolName
     val lotMESInfo = vmcEventData.lotMESInfo
@@ -187,6 +214,13 @@ class VmcAllMatchControlPlanProcessFunction() extends KeyedProcessFunction[Strin
 
   }
 
+  /**
+   * 更新状态数据 : vmcEventDataMatchControlPlanListState
+   * @param vmcEventData
+   * @param vmcControlPlanConfig
+   * @param context
+   * @param collector
+   */
   def cacheStateMatchedEventStartData(vmcEventData: VmcEventData,
                                       vmcControlPlanConfig: VmcControlPlanConfig,
                                       context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context,
@@ -196,6 +230,12 @@ class VmcAllMatchControlPlanProcessFunction() extends KeyedProcessFunction[Strin
 
   }
 
+  /**
+   * 生成对象 VmcEventDataMatchControlPlan
+   * @param vmcEventData
+   * @param vmcControlPlanConfig
+   * @return
+   */
   def generateVmcEventDataMatchControlPlan(vmcEventData: VmcEventData, vmcControlPlanConfig: VmcControlPlanConfig) = {
     VmcEventDataMatchControlPlan(dataType = vmcEventData.dataType,
       locationName = vmcEventData.locationName,
@@ -221,6 +261,12 @@ class VmcAllMatchControlPlanProcessFunction() extends KeyedProcessFunction[Strin
       indexCount = -1)
   }
 
+  /**
+   * 生成对象 VmcRawDataMatchedControlPlan
+   * @param rawData
+   * @param vmcControlPlanConfig
+   * @return
+   */
   def generateVmcRawDataMatchedControlPlan(rawData: VmcRawData, vmcControlPlanConfig: VmcControlPlanConfig) = {
     VmcRawDataMatchedControlPlan(dataType = rawData.dataType,
       toolName = rawData.toolName,
@@ -232,6 +278,12 @@ class VmcAllMatchControlPlanProcessFunction() extends KeyedProcessFunction[Strin
   }
 
 
+  /**
+   * 输出eventStart
+   * @param eventStartData
+   * @param context
+   * @param collector
+   */
   def collectEventStartData(eventStartData: VmcEventData, context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context, collector: Collector[JsonNode]) = {
     val vmcEventDataMatchControlPlanList: List[VmcEventDataMatchControlPlan] = vmcEventDataMatchControlPlanListState.get.toList
     vmcEventDataMatchControlPlanList.foreach(vmcEventDataMatchControlPlan => {
@@ -240,6 +292,12 @@ class VmcAllMatchControlPlanProcessFunction() extends KeyedProcessFunction[Strin
   }
 
 
+  /**
+   * 输出rawData
+   * @param rawData
+   * @param context
+   * @param collector
+   */
   def collectRawData(rawData: VmcRawData, context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context, collector: Collector[JsonNode]) = {
     val vmcEventDataMatchControlPlanList: List[VmcEventDataMatchControlPlan] = vmcEventDataMatchControlPlanListState.get.toList
     vmcEventDataMatchControlPlanList.foreach(elem => {
@@ -250,6 +308,12 @@ class VmcAllMatchControlPlanProcessFunction() extends KeyedProcessFunction[Strin
     })
   }
 
+  /**
+   * 输出eventEnd
+   * @param eventEndData
+   * @param context
+   * @param collector
+   */
   def collectEventEndData(eventEndData: VmcEventData, context: KeyedProcessFunction[String, JsonNode, JsonNode]#Context, collector: Collector[JsonNode]) = {
     val vmcEventDataMatchControlPlanList: List[VmcEventDataMatchControlPlan] = vmcEventDataMatchControlPlanListState.get.toList
     vmcEventDataMatchControlPlanList.foreach(elem => {
@@ -258,4 +322,13 @@ class VmcAllMatchControlPlanProcessFunction() extends KeyedProcessFunction[Strin
       collector.collect(beanToJsonNode[VmcEventDataMatchControlPlan](vmcEventDataMatchControlPlan))
     })
   }
+
+  /**
+   * 清理所有的状态变量
+   */
+  def clearAllState(): Unit = {
+    logger.warn(s"clearAllState")
+    vmcEventDataMatchControlPlanListState.clear()
+  }
+
 }

@@ -559,6 +559,7 @@ object ProjectConfig {
   var CHECKPOINT_TIME_OUT_VMC_INDICATOR_JOB = 600000
 
 
+  var KAFKA_CONSUMER_GROUP_VMC_ALL_JOB = "consumer-group-vmc-all-job"
   var KAFKA_CONSUMER_GROUP_VMC_ETL_JOB = "consumer-group-vmc-etl-job"
   var KAFKA_CONSUMER_GROUP_VMC_WINDOW_JOB = "consumer-group-vmc-window-job"
   var KAFKA_CONSUMER_GROUP_VMC_INDICATOR_JOB = "consumer-group-vmc-indicator-job"
@@ -1235,6 +1236,7 @@ object ProjectConfig {
     CHECKPOINT_INTERVAL_VMC_INDICATOR_JOB = configname.get("checkpoint.interval.vmc.indicator.job",CHECKPOINT_INTERVAL_VMC_INDICATOR_JOB.toString).trim.toInt
     CHECKPOINT_TIME_OUT_VMC_INDICATOR_JOB = configname.get("checkpoint.time.out.vmc.indicator.job",CHECKPOINT_TIME_OUT_VMC_INDICATOR_JOB.toString).trim.toInt
 
+    KAFKA_CONSUMER_GROUP_VMC_ALL_JOB = configname.get("consumer.group.vmc.all.job",KAFKA_CONSUMER_GROUP_VMC_ALL_JOB.toString).trim
     KAFKA_CONSUMER_GROUP_VMC_ETL_JOB = configname.get("consumer.group.vmc.etl.job",KAFKA_CONSUMER_GROUP_VMC_ETL_JOB.toString).trim
     KAFKA_CONSUMER_GROUP_VMC_WINDOW_JOB = configname.get("consumer.group.vmc.window.job",KAFKA_CONSUMER_GROUP_VMC_WINDOW_JOB.toString).trim
     KAFKA_CONSUMER_GROUP_VMC_INDICATOR_JOB = configname.get("consumer.group.vmc.indicator.job",KAFKA_CONSUMER_GROUP_VMC_INDICATOR_JOB.toString).trim
